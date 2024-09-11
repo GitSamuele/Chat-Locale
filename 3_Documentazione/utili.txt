@@ -1,0 +1,4 @@
+visualizza porte servizi:	netstat -ano | findstr :*porta*
+esempio:			netstat -ano | findstr :8080
+
+sito per icone:			https://icoconvert.com/

@@ -1,0 +1,2 @@
+Server: pyinstaller server.py --onefile --clean
+Slave:	pyinstaller slave.py --onefile --noconsole --clean --icon=../icone/icon.ico
