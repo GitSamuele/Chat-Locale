@@ -1,0 +1,2 @@
+Installare firebase:		npm install firebase
+avviare servizio:		npm start
