@@ -6,16 +6,36 @@
     <title>Autenticazione</title>
     <link rel="stylesheet" href="index.css">
 </head>
+
 <body>
-    <h1>Accedi alla Chat</h1>
-    <div id="auth-container">
-        <button id="login-button">Accedi con Google</button>
-        <h2>Oppure accedi con email e password</h2>
-        <input type="email" id="email" placeholder="Email" />
-        <input type="password" id="password" placeholder="Password" />
-        <button id="login-email-button">Accedi</button>
-        <button id="register-button">Registrati</button>
-    </div>
-    <script type="module" src="auth.js"></script>
+
+    <center>
+        <div id="operativo" style="display: none;">
+            <h1>Accedi alla Chat</h1>
+            
+            <!-- Container per il login e la registrazione -->
+            <div id="auth-container">
+
+                <!-- Bottone per login tramite Google -->
+                <button id="login-button">Accedi con Google</button>
+                
+                <!-- Opzione per il login tramite email e password -->
+                <h2>Oppure accedi con email e password</h2>
+                <input type="email" id="email" placeholder="Email" required/><br>
+                <input type="password" id="password" placeholder="Password" required/><br>
+                <button id="login-email-button">Accedi</button><br>
+                
+                <!-- Bottone per registrarsi -->
+                <button id="register-button">Registrati</button>
+
+            </div>
+        </div>
+
+        <div id="nonOperativo" style="display: none;">
+            <h1>Servizio non disponibile</h1>
+        </div>
+    </center>
+
 </body>
+<script type="module" src="auth.js"></script>
 </html>

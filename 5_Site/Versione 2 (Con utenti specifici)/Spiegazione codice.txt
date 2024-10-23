@@ -1,0 +1,72 @@
+* * * * * * * * * *
+*     auth.js     *
+* * * * * * * * * *
+
+Inizializzazione di firebase nel codice javascript ("InitializeApp" in particolare) nella
+variabile app, usata successivamente per interagire col database di firebase:
+
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js";
+    const app = initializeApp(firebaseConfig);
+
+-------------------------------------------------------------------------------------------
+
+Importo del modulo di autenticazione nella costante auth.
+
+    import { getAuth, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-auth.js";
+
+-------------------------------------------------------------------------------------------
+
+Importo del modulo database nella costante database. 
+
+    import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js";
+    const database = getDatabase(app);
+
+-------------------------------------------------------------------------------------------
+
+FIREBASE CONFIG
+
+In "firebaseconfig" vengono salvate tutte le informazioni utili alla connessione al 
+servizio di firebase.
+
+-------------------------------------------------------------------------------------------
+
+EVENT LISTNER
+
+Per capire se un pulsante sia stato premuto viene usato un eventListner in base all'ID dei
+bottoni, in questo caso se l'eventListner "click" viene richiamato anche la funzione lo è.
+
+-------------------------------------------------------------------------------------------
+
+LOGIN
+
+Quando un utente preme per accedere al proprio account, nel metodo viene istanziata una costante
+"provider" che serve per aprire una autenticazione.
+
+    const provider = new GoogleAuthProvider();
+
+Successivamente tramite il metodo "signInWithPopup()" (con argomenti auth e il provider) 
+si permette all'utente di connettersi (con un account google in questo caso).
+L'esito viene salvato in "result".
+
+Viene istanziata una costante "user" contentente le informazioni dell'account google dell'
+utente.
+
+    const user = result.user;
+
+Per salvare la email su firebase viene usato il metodo "set()".
+
+    set(ref(database, 'users/' + user.uid), {email: user.email});
+
+tramite "ref()" si cerca una posizione specifica nel database (ovvero utenti/uid).
+In seguito si è reindirizzati a index.html:
+
+window.location.href = "index.html";
+
+Nel catch è presente un output per avvisare l'utente del fallimento
+
+___________________________________________________________________________________________
+
+* * * * * * * * * *
+*    index.js     *
+* * * * * * * * * *
+
