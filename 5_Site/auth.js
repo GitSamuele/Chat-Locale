@@ -2,7 +2,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js";
 import { getAuth, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-auth.js";
 import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js";
-import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore.js";  // Corretto import di Firestore
 
 // Configurazione Firebase
 const firebaseConfig = {
@@ -19,26 +18,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const database = getDatabase(app);
-const testConn = getFirestore(app);
-
-async function verificaDisponibilita() {
-    try {
-        // Prova a eseguire una scrittura di test su Firestore
-        await setDoc(doc(firestore, "testCollection", "testDoc"), {
-            testField: "Hello Firebase!"
-        });
-
-        console.log("Connessione a Firebase riuscita e scrittura effettuata!");
-
-        document.getElementById('operativo').style.display = 'block';
-        document.getElementById('nonOperativo').style.display = 'none';
-    } catch (error) {
-        console.error("Errore durante la connessione a Firebase:", error);
-        
-        document.getElementById('operativo').style.display = 'none';
-        document.getElementById('nonOperativo').style.display = 'block';
-    }
-}
 
 // Funzione per il login con Google
 document.getElementById('login-button').addEventListener('click', () => {
