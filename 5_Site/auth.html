@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Autenticazione</title>
+    <title>Pagina di autenticazione</title>
     <link rel="stylesheet" href="index.css">
 </head>
 
 <body>
 
     <center>
+        <div id="box">
             <h1>Accedi alla Chat</h1>
             
             <!-- Container per il login e la registrazione -->
@@ -22,13 +23,20 @@
                 <h2>Oppure accedi con email e password</h2>
                 <input type="email" id="email" placeholder="Email" required/><br>
                 <input type="password" id="password" placeholder="Password" required/><br>
-                <button id="login-email-button">Accedi</button><br>
+                <p id="cambiaP">Password dimenticata?</p>
+
+                <br><br>
+
+                <!-- Bottone per loggarsi -->
+                <button id="login-email-button">Accedi</button>
                 
+                <h3>oppure</h3>
+
                 <!-- Bottone per registrarsi -->
                 <button id="register-button">Registrati</button>
 
             </div>
-
+        </div>
     </center>
 
 </body>

@@ -1,6 +1,6 @@
 // Importa i moduli necessari da Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js";
-import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-auth.js";
+import { getAuth, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-auth.js";
 import { getDatabase, ref, push, set, onChildAdded } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js";
 
 // Configurazione Firebase
@@ -24,11 +24,8 @@ let userEmail = "";
 onAuthStateChanged(auth, (user) => {
     if (user) {
         userEmail = user.email;
-        console.log("Utente autenticato: ", user);
-        document.getElementById('current-user-id').textContent = user.uid; // Mostra l'ID utente attuale
-        loadConversations(user.uid); // Carica le conversazioni dell'utente
+        document.getElementById("benvenuto").innerHTML = "Autenticato come \"" + userEmail + "\"";
     } else {
-        console.log("Nessun utente autenticato. Reindirizzamento alla pagina di autenticazione.");
         window.location.href = "auth.html"; // Reindirizza alla pagina di autenticazione
     }
 });
@@ -50,7 +47,7 @@ function tastoPremuto(event) {
 
 function invioMessaggio(){
     // Recupero del messaggio da inviare all'interno della casella di testo
-    const message = document.getElementById('messaggio').value;
+    var message = document.getElementById('messaggio').value;
 
     if (message) {
         // Aggiunta al database il messaggio
@@ -91,23 +88,74 @@ onChildAdded(messagesRef, (snapshot) => {
     // Applicazione dello stile ai messaggi
     if(messageData.mittente == userEmail){
         messageElement.classList.add("utente");
+        messageElement.innerHTML = "<b style=\"color: rgb(87, 153, 122); user-select: none\">Tu</b>";
     }else{
         messageElement.classList.add("altri");
+        messageElement.innerHTML = "<b style=\"color: rgb(129, 164, 193); user-select: none\">" + messageData.mittente + "</b>";
     }
 
-    // Inserimento del testo nel tag "p" precedente
-    messageElement.innerHTML = "<b>" + messageData.mittente + ":</b><br>" + messageData.text + "<br><i>" + ora + " - " + data + "</i>";
+    // Inserimento del testo nel tag "p" precedente e dell'ora
+    if(isLink(messageData.text)){
+        // Se contiene un link, lo rende cliccabile
+        messageElement.innerHTML += "<br>" + formatLink(messageData.text) + "<br><i style=\"color: gray; user-select: none\">" + ora + " - " + data + "</i>";
+    }else{
+        messageElement.innerHTML += "<br>" + messageData.text + "<br><i style=\"color: gray; user-select: none\">" + ora + " - " + data + "</i>";
+    }
+
     // Aggiunta dell'elemento al contenitore dei messaggi
     document.getElementById('messaggi').appendChild(messageElement);
 });
 
 // Funzione per gestire il logout
 // Dopo il logout, l'utente viene reindirizzato alla pagina di autenticazione
-document.getElementById('logout-button').addEventListener('click', () => {
+document.getElementById('logout').addEventListener('click', () => {
     signOut(auth).then(() => {
-        console.log("Utente disconnesso");
-        window.location.href = "auth.html"; // Reindirizza alla pagina di autenticazione
-    }).catch((error) => {
-        console.error("Errore durante la disconnessione: ", error);
-    });
+        // Reindirizza alla pagina di autenticazione
+        window.location.href = "auth.html";
+    })
 });
+
+// Metodo di verifica se sia un link
+function isLink(str) {
+    // Il regex è una stringa utilizzabile come filtro da applicare ad una stringa
+    const regex = /https?:\/\/[^\s/$.?#].[^\s]*/;
+    const match = str.match(regex); // Cerca il primo match dell'URL
+
+    // Se c'è un match, verifica se è un URL valido
+    if (match) {
+        try {
+            new URL(match[0]); // Tenta di creare un oggetto URL
+            return true; // È un link valido
+        } catch (e) {
+            return false; // Il link non è valido
+        }
+    }
+
+    return false; // Se non c'è nessun URL
+}
+
+// Metodo per formattare il contenuto di un messaggio se contiene un link
+function formatLink(str){
+    // Il regex è una stringa utilizzabile come filtro da applicare ad una stringa
+    const regex = /https?:\/\/[^\s/$.?#].[^\s]*/g;
+    var formattata = "";
+    var ultimoIndex = 0;
+
+    // Cicliamo sulla stringa per trovare tutti i link
+    var match;
+    while ((match = regex.exec(str)) !== null) {
+        // Aggiungiamo il testo prima del link
+        formattata += str.slice(ultimoIndex, match.index);
+
+        // Aggiungiamo il tag <a> per il link trovato
+        formattata += `<a href="${match[0]}">${match[0]}</a>`;
+
+        // Aggiorniamo l'ultimo indice
+        ultimoIndex = regex.lastIndex;
+    }
+
+    // Aggiungiamo la parte finale della stringa (dopo l'ultimo URL)
+    formattata += str.slice(ultimoIndex);
+
+    return formattata;
+}

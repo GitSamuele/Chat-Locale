@@ -4,16 +4,18 @@ body{
 
 #contenitore {
     width: 80vw;
-    margin: 0 auto;
+    height: 60vh;
+    margin-top: 35px;
+    margin-left: 10vw;
 }
 
 #messaggi {
-    background-image: url("bg.png");
+    background-image: url("img/bg.png");
     display: flex;
     flex-direction: column;
     border: 1px solid black;
     width: 100%;
-    height: 300px;
+    height: 80%;
     overflow-y: scroll;
     padding: 10px;
     margin-bottom: 10px;
@@ -34,18 +36,23 @@ p{
     padding: 10px;
     width: fit-content;
     border-radius: 10px;
+    max-width: 60%;
+}
+
+br{
+    user-select: none;
 }
 
 .utente{
     margin-left: auto;
     background-color: mintcream;
-    border: 1px solid rgb(182, 233, 209);
+    border: 1px solid rgb(87, 153, 122);
 }
 
 .altri{
     margin-right: auto;
     background-color: aliceblue;
-    border: 1px solid rgb(218, 230, 240);
+    border: 1px solid rgb(129, 164, 193);
 }
 
 b, i{
@@ -53,7 +60,6 @@ b, i{
 }
 
 button {
-    width: 15%;
     background-color: #4CAF50;
     color: white;
     border: none;
@@ -63,6 +69,42 @@ button {
 
 button:hover{
     background-color: #246426;
+}
+
+#logout{
+    width: 40px;
+    background-color: rgb(252, 72, 72);
+    background-image: url(img/logout.png);
+    background-size: 100% 100%;
+}
+
+#invia{
+    width: 40px;
+}
+
+#cambiaP{
+    padding: 0;
+    font-size: 15px;
+    cursor: pointer;
+    color: rgb(252, 72, 72);
+}
+
+#cambiaP:hover{
+    text-decoration: underline;
+    color: red;
+}
+
+#email, #password{
+    width: 250px;
+}
+
+#box{
+    width: 50vw;
+    height: 100%;
+    background-color: #f3f1e9;
+    border-radius: 50px;
+    padding: 50px;
+    border: 1px solid black;
 }
 
 /* Scrollbar */

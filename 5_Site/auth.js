@@ -1,6 +1,6 @@
 // Importa i moduli necessari da Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js";
-import { getAuth, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-auth.js";
+import { getAuth, sendEmailVerification, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-auth.js";
 import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js";
 
 // Configurazione Firebase
@@ -33,9 +33,7 @@ document.getElementById('login-button').addEventListener('click', () => {
         console.log("Utente loggato: ", user);
         // Reindirizzamento alla pagina principale
         window.location.href = "index.html";
-    }).catch((error) => {
-        console.error("Errore durante l'accesso: ", error);
-    });
+    })
 });
 
 // Funzione per il login con email e password
@@ -46,13 +44,18 @@ document.getElementById('login-email-button').addEventListener('click', () => {
     // Autentica l'utente tramite email e password
     signInWithEmailAndPassword(auth, email, password)
         .then((userCredential) => {
+
             const user = userCredential.user;
-            console.log("Utente loggato con email: ", user);
-            window.location.href = "index.html"; // Reindirizza alla pagina principale
+
+            // Verifica se l'email è verificata
+            if (!user.emailVerified) {
+                sendEmailVerification(user);
+                window.location.href = "wait.html"; // Reindirizza alla pagina di verifica
+            }else{
+                window.location.href = "index.html"; // Reindirizza alla pagina principale
+            }
+
         })
-        .catch((error) => {
-            console.error("Errore durante l'accesso: ", error);
-        });
 });
 
 // Funzione per la registrazione di nuovi utenti
@@ -69,11 +72,17 @@ document.getElementById('register-button').addEventListener('click', () => {
             set(ref(database, 'users/' + user.uid), {
                 email: user.email
             });
-            
-            console.log("Utente registrato: ", user);
-            window.location.href = "index.html"; // Reindirizza alla pagina principale
+
+            sendEmailVerification(user)
+                .then(() => {
+                    // Reindirizza alla pagina di verifica
+                    window.location.href = "wait.html";
+                })
+
         })
-        .catch((error) => {
-            console.error("Errore durante la registrazione: ", error);
-        });
+});
+
+// Reindirizza alla pagina per ripristino della password
+document.getElementById('cambiaP').addEventListener('click', () => {
+    window.location.href = "forgot.html";
 });

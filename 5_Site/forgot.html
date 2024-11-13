@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pagina di ripristino della password</title>
+    <link rel="stylesheet" href="index.css">
+</head>
+<body>
+
+    <center>
+        <div id="box">
+            <h1>Password dimenticata</h1>
+            
+            <!-- Opzione per il login tramite email e password -->
+            <p style="text-align: left;">Se hai dimenticato la password inserisci l'email dell'account e verrà inviata via email un modulo per ripristinarla.</p>
+            <input type="email" id="email" placeholder="Email" required/>
+            <p id="inviato" style="padding: 10px; color: lime; font-size: 20px; font-weight: bold; display: none;">Modulo inviato</p>
+            <p id="inesistente" style="padding: 10px; color: red; font-size: 20px; font-weight: bold; display: none">Email invalida</p>
+            <br><br><br>
+            <button id="home" style="background-color:rgb(252, 72, 72);">←</button>
+            <button id="sendButton">Richiedi ripristino</button>
+        </div>
+    </center>
+
+</body>
+<script type="module" src="forgot.js"></script>
+</html>
