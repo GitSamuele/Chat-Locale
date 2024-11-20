@@ -10,7 +10,7 @@ body{
 }
 
 #messaggi {
-    background-image: url("img/bg.png");
+    background-image: url("../img/bg.png");
     display: flex;
     flex-direction: column;
     border: 1px solid black;
@@ -74,12 +74,13 @@ button:hover{
 #logout{
     width: 40px;
     background-color: rgb(252, 72, 72);
-    background-image: url(img/logout.png);
+    background-image: url(../img/logout.png);
     background-size: 100% 100%;
 }
 
-#invia{
+#invia, #allegato{
     width: 40px;
+    height: 40px;
 }
 
 #cambiaP{

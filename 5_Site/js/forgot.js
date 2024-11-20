@@ -19,7 +19,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
 
-// Funzione per la registrazione di nuovi utenti
+// Funzione per resettare la password
 document.getElementById("sendButton").addEventListener('click', () => {
     const email = document.getElementById('email').value;
 
