@@ -78,8 +78,21 @@ button:hover{
     background-size: 100% 100%;
 }
 
-#invia, #allegato{
-    width: 40px;
+#immagineAspetto{
+    padding: 10px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 10px;
+}
+
+#immagineAspetto:hover{
+    background-color: #246426;
+}
+
+#invia, #immagineAspetto{
+    width: 65px;
     height: 40px;
 }
 

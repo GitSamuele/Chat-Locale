@@ -1,6 +1,6 @@
 // Importa i moduli necessari da Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js";
-import { getAuth, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-auth.js";
+import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-auth.js";
 import { getDatabase, ref, push, set, onChildAdded } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js";
 
 // Configurazione Firebase
@@ -18,11 +18,16 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const database = getDatabase(app);
+
+// Variabili
 let userEmail = "";
+const chat = document.getElementById("messaggi");
 
 // Funzione per verificare lo stato di autenticazione dell'utente
 onAuthStateChanged(auth, (user) => {
-    if (user) {
+    // Verifica se ci sia una autenticazione in corso e che l'autenticazione sia verificata via email
+    // Serve ad evitare che qualcuno crei un account non verificato e acceda cambiando manualmente ad index.html
+    if (user && user.emailVerified) {
         userEmail = user.email;
         document.getElementById("benvenuto").innerHTML = "Autenticato come \"" + userEmail + "\"";
     } else {
@@ -45,12 +50,35 @@ function tastoPremuto(event) {
     }
 }
 
-function invioMessaggio(){
-    // Recupero del messaggio da inviare all'interno della casella di testo
+function invioMessaggio() {
+    // Recupero del messaggio da inviare
     var message = document.getElementById('messaggio').value;
+    var fileInput = document.getElementById('fileInput');
 
-    if (message) {
-        // Aggiunta al database il messaggio
+    // Se è stato selezionato un file immagine
+    if (fileInput.files && fileInput.files[0]) {
+        // Convertiamo il file immagine in Base64
+        convertToBase64(fileInput.files[0], (base64Image) => {
+            // Aggiungi il messaggio con l'immagine
+            const newMessageRef = push(messagesRef);
+            const data = new Date();
+            set(newMessageRef, {
+                mittente: userEmail,
+                text: message, // Testo del messaggio
+                imageBase64: base64Image,  // Immagine in formato Base64
+                ora: data.getHours(),
+                minuti: data.getMinutes(),
+                giorno: data.getDate(),
+                mese: data.getMonth() + 1,
+                anno: data.getFullYear()
+            });
+
+            // Pulizia dei campi (testo e file)
+            document.getElementById('messaggio').value = '';
+            fileInput.value = ''; // Resetta il campo di input immagine
+        });
+    } else if (message) {
+        // Se non c'è immagine, ma solo un messaggio di testo
         const newMessageRef = push(messagesRef);
         const data = new Date();
         set(newMessageRef, {
@@ -59,52 +87,65 @@ function invioMessaggio(){
             ora: data.getHours(),
             minuti: data.getMinutes(),
             giorno: data.getDate(),
-            mese: data.getMonth() + 1, // Viene aggiunto 1 perchè i mesi vengono contati dallo 0
+            mese: data.getMonth() + 1,
             anno: data.getFullYear()
         });
+
         // Pulizia del campo di testo
         document.getElementById('messaggio').value = '';
+
     }
 }
+
 
 window.addEventListener('keydown', tastoPremuto);
 
 // Ogni volta che viene aggiunto un figlio al riferimento "messagesRef" viene eseguito il codice del blocco
 onChildAdded(messagesRef, (snapshot) => {
-    // Trasformazione dei dati dello snapshot in un oggetto javascript
     const messageData = snapshot.val();
 
-    // Formattazione minuti
-    if(messageData.minuti >= 0 && messageData.minuti <= 9){
+    // Formattazione dei minuti
+    if (messageData.minuti >= 0 && messageData.minuti <= 9) {
         messageData.minuti = "0" + messageData.minuti;
     }
 
     const ora = messageData.ora + ":" + messageData.minuti;
     const data = messageData.giorno + "/" + messageData.mese + "/" + messageData.anno;
 
-    // Creazione di un tag "p"
+    // Creazione di un tag <p> per il messaggio
     const messageElement = document.createElement('p');
 
-    // Applicazione dello stile ai messaggi
-    if(messageData.mittente == userEmail){
+    if (messageData.mittente == userEmail) {
         messageElement.classList.add("utente");
         messageElement.innerHTML = "<b style=\"color: rgb(87, 153, 122); user-select: none\">Tu</b>";
-    }else{
+    } else {
         messageElement.classList.add("altri");
         messageElement.innerHTML = "<b style=\"color: rgb(129, 164, 193); user-select: none\">" + messageData.mittente + "</b>";
     }
 
-    // Inserimento del testo nel tag "p" precedente e dell'ora
-    if(isLink(messageData.text)){
-        // Se contiene un link, lo rende cliccabile
-        messageElement.innerHTML += "<br>" + formatLink(messageData.text) + "<br><i style=\"color: gray; user-select: none\">" + ora + " - " + data + "</i>";
-    }else{
-        messageElement.innerHTML += "<br>" + messageData.text + "<br><i style=\"color: gray; user-select: none\">" + ora + " - " + data + "</i>";
+    // Inserimento del testo e dell'ora
+    if (isLink(messageData.text)) {
+        messageElement.innerHTML += "<br>" + formatLink(messageData.text);
+    } else {
+        messageElement.innerHTML += "<br>" + messageData.text;
     }
 
-    // Aggiunta dell'elemento al contenitore dei messaggi
+    // Se il messaggio contiene un'immagine Base64
+    if (messageData.imageBase64) {
+        messageElement.innerHTML += `<br><img src="${messageData.imageBase64}" style="max-width: 300px; max-height: 300px; border-radius: 5px;" />`;
+    }
+
+    // Aggiunta della data e dell'ora al messaggio
+    messageElement.innerHTML += "<br><i style=\"color: gray; user-select: none\">" + ora + " - " + data + "</i>"
+
+    // Aggiungi il messaggio al contenitore
     document.getElementById('messaggi').appendChild(messageElement);
+
+    // Aggiornamento della visuale
+    chat.scrollTop = chat.scrollHeight;
+    
 });
+
 
 // Funzione per gestire il logout
 // Dopo il logout, l'utente viene reindirizzato alla pagina di autenticazione
@@ -159,3 +200,20 @@ function formatLink(str){
 
     return formattata;
 }
+
+// Funzione per convertire un file in base 64
+function convertToBase64(file, onLoad) {
+    // Creazione dell'oggetto "reader" per leggere un file
+    const reader = new FileReader();
+    // reader.onloadend serve a leggere prima tutto il file, in seguito eseguire un blocco di codice
+    reader.onloadend = function() {
+        onLoad(reader.result);
+    };
+    // Legge l'oggetto "reader"
+    reader.readAsDataURL(file);
+}
+
+// Aggiornamento della visuale al caricamento della chat
+window.onload = () => {
+    chat.scrollTop = chat.scrollHeight;
+};

@@ -14,7 +14,11 @@
         <div id="messaggi"></div>
         <button id="logout"> </button>
         <input type="text" id="messaggio" placeholder="Scrivi un messaggio...">
-        <button id="allegato">+</button>
+
+        <!-- stile con label -->
+        <label for="fileInput" id="immagineAspetto">📷</label>
+        <input type="file" id="fileInput" accept="image/*" style="display: none;"></input>
+
         <button id="invia" onclick="invia()">➜</button>
     </div>
 
