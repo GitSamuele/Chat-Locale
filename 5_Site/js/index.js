@@ -22,6 +22,7 @@ const database = getDatabase(app);
 // Variabili
 let userEmail = "";
 const chat = document.getElementById("messaggi");
+const paroleProibite = ["Proibita"];
 
 // Funzione per verificare lo stato di autenticazione dell'utente
 onAuthStateChanged(auth, (user) => {
@@ -43,6 +44,7 @@ document.getElementById("invia").addEventListener("click", () => {
     invioMessaggio();
 });
 
+window.addEventListener('keydown', tastoPremuto);
 // Invio di un messaggio con invio
 function tastoPremuto(event) {
     if (event.key == 'Enter') {
@@ -50,59 +52,86 @@ function tastoPremuto(event) {
     }
 }
 
+// Funzione per verificare il contenuto dei messaggi inviati
+function contieneParoleProibite(messaggio) {
+    for (let i = 0; i < paroleProibite.length; i++) {
+        // Il metodo .includes() verifica se una stringa sia contenuta all'interno di un array
+        if (messaggio.toLowerCase().includes(paroleProibite[i].toLowerCase())) {
+            return true;
+        }
+    }
+    return false;
+}
+
 function invioMessaggio() {
     // Recupero del messaggio da inviare
     var message = document.getElementById('messaggio').value;
     var fileInput = document.getElementById('fileInput');
 
-    // Se è stato selezionato un file immagine
-    if (fileInput.files && fileInput.files[0]) {
-        // Convertiamo il file immagine in Base64
-        convertToBase64(fileInput.files[0], (base64Image) => {
-            // Aggiungi il messaggio con l'immagine
-            const newMessageRef = push(messagesRef);
-            const data = new Date();
-            set(newMessageRef, {
-                mittente: userEmail,
-                text: message, // Testo del messaggio
-                imageBase64: base64Image,  // Immagine in formato Base64
-                ora: data.getHours(),
-                minuti: data.getMinutes(),
-                giorno: data.getDate(),
-                mese: data.getMonth() + 1,
-                anno: data.getFullYear()
+    if(contieneParoleProibite(message)){
+        alert("Parola proibita inserita");
+    }else{
+
+        // Se è stato selezionato un file immagine
+        if (fileInput.files[0]) {
+            // Convertiamo il file immagine in Base64
+            convertToBase64(fileInput.files[0], (base64Image) => {
+                // Aggiungi il messaggio con l'immagine
+                const newMessageRef = push(messagesRef);
+                const data = new Date();
+                set(newMessageRef, {
+                    mittente: userEmail,
+                    text: message, // Testo del messaggio
+                    image: base64Image,  // Immagine in formato Base64
+                    ora: data.getHours(),
+                    minuti: data.getMinutes(),
+                    giorno: data.getDate(),
+                    mese: data.getMonth() + 1,
+                    anno: data.getFullYear()
+                });
+
+                // Pulizia dei campi (testo e file)
+                document.getElementById('messaggio').value = '';
+                fileInput.value = ''; // Resetta il campo di input immagine
             });
+        } else if (message) {
 
-            // Pulizia dei campi (testo e file)
+            if(message.trim().length >= 1){
+                const newMessageRef = push(messagesRef);
+                const data = new Date();
+                set(newMessageRef, {
+                    mittente: userEmail,
+                    text: message,
+                    ora: data.getHours(),
+                    minuti: data.getMinutes(),
+                    giorno: data.getDate(),
+                    mese: data.getMonth() + 1,
+                    anno: data.getFullYear()
+                });
+            }else{
+                alert("Non è possibile inviare messaggi vuoti");
+            }
+
+            // Pulizia del campo di testo
             document.getElementById('messaggio').value = '';
-            fileInput.value = ''; // Resetta il campo di input immagine
-        });
-    } else if (message) {
-        // Se non c'è immagine, ma solo un messaggio di testo
-        const newMessageRef = push(messagesRef);
-        const data = new Date();
-        set(newMessageRef, {
-            mittente: userEmail,
-            text: message,
-            ora: data.getHours(),
-            minuti: data.getMinutes(),
-            giorno: data.getDate(),
-            mese: data.getMonth() + 1,
-            anno: data.getFullYear()
-        });
 
-        // Pulizia del campo di testo
-        document.getElementById('messaggio').value = '';
+        }
 
     }
+
 }
 
-
-window.addEventListener('keydown', tastoPremuto);
-
-// Ogni volta che viene aggiunto un figlio al riferimento "messagesRef" viene eseguito il codice del blocco
 onChildAdded(messagesRef, (snapshot) => {
     const messageData = snapshot.val();
+
+    // Controllo data
+    const dataMessaggio = new Date(messageData.anno + "-" + messageData.mese + "-" + messageData.giorno);
+    const dataAdttuale = new Date();
+
+    // Controllo data e ora del messaggio, se più vecchio di 30 giorni non viene visualizzato
+    if((dataAdttuale - dataMessaggio) / (1000 * 3600 * 24) >= 30){
+        return;
+    }
 
     // Formattazione dei minuti
     if (messageData.minuti >= 0 && messageData.minuti <= 9) {
@@ -112,7 +141,6 @@ onChildAdded(messagesRef, (snapshot) => {
     const ora = messageData.ora + ":" + messageData.minuti;
     const data = messageData.giorno + "/" + messageData.mese + "/" + messageData.anno;
 
-    // Creazione di un tag <p> per il messaggio
     const messageElement = document.createElement('p');
 
     if (messageData.mittente == userEmail) {
@@ -123,37 +151,71 @@ onChildAdded(messagesRef, (snapshot) => {
         messageElement.innerHTML = "<b style=\"color: rgb(129, 164, 193); user-select: none\">" + messageData.mittente + "</b>";
     }
 
-    // Inserimento del testo e dell'ora
     if (isLink(messageData.text)) {
         messageElement.innerHTML += "<br>" + formatLink(messageData.text);
     } else {
         messageElement.innerHTML += "<br>" + messageData.text;
     }
 
-    // Se il messaggio contiene un'immagine Base64
-    if (messageData.imageBase64) {
-        messageElement.innerHTML += `<br><img src="${messageData.imageBase64}" style="max-width: 300px; max-height: 300px; border-radius: 5px;" />`;
+    if (messageData.image) {
+        messageElement.innerHTML += `<br><img src="${messageData.image}" style="max-width: 300px; max-height: 300px; border-radius: 5px;" />`;
     }
 
-    // Aggiunta della data e dell'ora al messaggio
-    messageElement.innerHTML += "<br><i style=\"color: gray; user-select: none\">" + ora + " - " + data + "</i>"
+    messageElement.innerHTML += "<br><i style=\"color: gray; user-select: none\">" + ora + " - " + data + "</i>";
 
-    // Aggiungi il messaggio al contenitore
     document.getElementById('messaggi').appendChild(messageElement);
-
-    // Aggiornamento della visuale
     chat.scrollTop = chat.scrollHeight;
+
+});
+
+// Esporta in csv o pdf
+document.getElementById("esporta").addEventListener("click", function() {
+
+    let dati = [];
+    var formato = document.getElementById("formato").value;
+
+    onChildAdded(messagesRef, (snapshot) => {
+        const messageData = snapshot.val();
+        
+        // Controllo data
+        const dataMessaggio = new Date(messageData.anno + "-" + messageData.mese + "-" + messageData.giorno);
+        const dataAdttuale = new Date();
+
+        // Controllo data e ora del messaggio, se più vecchio di 30 giorni non viene visualizzato
+        if((dataAdttuale - dataMessaggio) / (1000 * 3600 * 24) >= 30){
+            return;
+        }
+
+        dati.push({
+            mittente: messageData.mittente,
+            testo: messageData.text,
+            data: `${messageData.giorno}/${messageData.mese}/${messageData.anno}`,
+            ora: `${messageData.ora}:${messageData.minuti}`
+        });
+    });
     
 });
 
+if (formato == "csv") {
+    // Aggiunta dell'intestazione del CSV
+    var contenuto = "Mittente, Testo, Data, Ora\n";
+
+    dati.forEach((msg, index) => {
+        if (index > 0) {
+            csvContent += `${msg["Mittente"]}, ${msg["Testo"]}, ${msg["Data"]}, ${msg["Ora"]}\n`;
+        }
+    });
+
+} else if (formato == "pdf") {
+    
+}else{
+    alert("Seleziona un formato");
+}
 
 // Funzione per gestire il logout
 // Dopo il logout, l'utente viene reindirizzato alla pagina di autenticazione
 document.getElementById('logout').addEventListener('click', () => {
-    signOut(auth).then(() => {
-        // Reindirizza alla pagina di autenticazione
-        window.location.href = "auth.html";
-    })
+    signOut(auth);
 });
 
 // Metodo di verifica se sia un link

@@ -10,6 +10,11 @@
 
     <h3 id="benvenuto"></h3>
 
+    <div id="filter-box">
+        <input type="text" id="parola-chiave" placeholder="Inserire parola chiave...">
+        <button id="applica-filtro">↵</button>
+    </div>
+
     <div id="contenitore">
         <div id="messaggi"></div>
         <button id="logout"> </button>
@@ -19,7 +24,16 @@
         <label for="fileInput" id="immagineAspetto">📷</label>
         <input type="file" id="fileInput" accept="image/*" style="display: none;"></input>
 
-        <button id="invia" onclick="invia()">➜</button>
+        <button id="invia" onclick="invia()">➜</button><br><br><br>
+
+        <!-- Esporta chat -->
+        <select id="formato" name="formato">
+            <option value="-">-</option>
+            <option value="csv">CSV</option>
+            <option value="pdf">PDF</option>
+        </select>
+        
+        <button type="esporta">Esporta</button>
     </div>
 
     <script type="module" src="../js/index.js"></script>
