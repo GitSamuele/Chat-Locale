@@ -22,15 +22,7 @@ const database = getDatabase(app);
 // Funzione per il login con Google
 document.getElementById('login-button').addEventListener('click', () => {
     const provider = new GoogleAuthProvider();
-    signInWithPopup(auth, provider).then((result) => {
-        const user = result.user;
-        
-        // Salva l'email dell'utente nel database
-        set(ref(database, 'users/' + user.uid), {
-            email: user.email
-        });
-        
-        console.log("Utente loggato: ", user);
+    signInWithPopup(auth, provider).then( () => {
         // Reindirizzamento alla pagina principale
         window.location.href = "index.html";
     })
@@ -44,7 +36,6 @@ document.getElementById('login-email-button').addEventListener('click', () => {
     // Autentica l'utente tramite email e password
     signInWithEmailAndPassword(auth, email, password)
         .then((userCredential) => {
-
             const user = userCredential.user;
 
             // Verifica se l'email è verificata
@@ -55,6 +46,8 @@ document.getElementById('login-email-button').addEventListener('click', () => {
                 window.location.href = "index.html"; // Reindirizza alla pagina principale
             }
 
+        }).catch( () => {
+            document.getElementById("cambiaP").style.display = "block";
         })
 });
 
@@ -68,7 +61,7 @@ document.getElementById('register-button').addEventListener('click', () => {
         .then((userCredential) => {
             const user = userCredential.user;
             
-            // Salva l'email dell'utente nel database
+            // Salva l'email dell'utente nel database in base all'id
             set(ref(database, 'users/' + user.uid), {
                 email: user.email
             });
@@ -79,6 +72,8 @@ document.getElementById('register-button').addEventListener('click', () => {
                     window.location.href = "wait.html";
                 })
 
+        }).catch( () => {
+            alert("E-mail utente già in uso");
         })
 });
 

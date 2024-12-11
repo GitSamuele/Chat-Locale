@@ -1,7 +1,7 @@
 // Importa i moduli necessari da Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js";
 import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-auth.js";
-import { getDatabase, ref, push, set, onChildAdded } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js";
+import { getDatabase, ref, push, get, set, onChildAdded } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js";
 
 // Configurazione Firebase
 const firebaseConfig = {
@@ -39,14 +39,16 @@ onAuthStateChanged(auth, (user) => {
 // Referenza al nodo "messaggi" nel database
 const messagesRef = ref(database, 'messaggi');
 
-// Aggiungi un listener al bottone "Invia"
+// Invio del messaggio alla pressione del tasto con id "invia"
 document.getElementById("invia").addEventListener("click", () => {
     invioMessaggio();
 });
 
+// Aggiunta del listener di pressione dei tasti
 window.addEventListener('keydown', tastoPremuto);
-// Invio di un messaggio con invio
+// Verifica dell'input
 function tastoPremuto(event) {
+    // Se il tasto è "enter" allora invia il messaggio
     if (event.key == 'Enter') {
         invioMessaggio();
     }
@@ -70,52 +72,52 @@ function invioMessaggio() {
 
     if(contieneParoleProibite(message)){
         alert("Parola proibita inserita");
-    }else{
+        // Interrompe il codice
+        return;
+    }
 
-        // Se è stato selezionato un file immagine
-        if (fileInput.files[0]) {
-            // Convertiamo il file immagine in Base64
-            convertToBase64(fileInput.files[0], (base64Image) => {
-                // Aggiungi il messaggio con l'immagine
-                const newMessageRef = push(messagesRef);
-                const data = new Date();
-                set(newMessageRef, {
-                    mittente: userEmail,
-                    text: message, // Testo del messaggio
-                    image: base64Image,  // Immagine in formato Base64
-                    ora: data.getHours(),
-                    minuti: data.getMinutes(),
-                    giorno: data.getDate(),
-                    mese: data.getMonth() + 1,
-                    anno: data.getFullYear()
-                });
-
-                // Pulizia dei campi (testo e file)
-                document.getElementById('messaggio').value = '';
-                fileInput.value = ''; // Resetta il campo di input immagine
+    // Se è stato selezionato un file immagine
+    if (fileInput.files[0]) {
+        // Convertiamo il file immagine in Base64
+        convertToBase64(fileInput.files[0], (base64Image) => {
+            // Aggiungi il messaggio con l'immagine
+            const newMessageRef = push(messagesRef);
+            const data = new Date();
+            set(newMessageRef, {
+                mittente: userEmail,
+                text: message, // Testo del messaggio
+                image: base64Image,  // Immagine in formato Base64
+                ora: data.getHours(),
+                minuti: data.getMinutes(),
+                giorno: data.getDate(),
+                mese: data.getMonth() + 1,
+                anno: data.getFullYear()
             });
-        } else if (message) {
 
-            if(message.trim().length >= 1){
-                const newMessageRef = push(messagesRef);
-                const data = new Date();
-                set(newMessageRef, {
-                    mittente: userEmail,
-                    text: message,
-                    ora: data.getHours(),
-                    minuti: data.getMinutes(),
-                    giorno: data.getDate(),
-                    mese: data.getMonth() + 1,
-                    anno: data.getFullYear()
-                });
-            }else{
-                alert("Non è possibile inviare messaggi vuoti");
-            }
-
-            // Pulizia del campo di testo
+            // Pulizia dei campi (testo e file)
             document.getElementById('messaggio').value = '';
+            fileInput.value = ''; // Resetta il campo di input immagine
+        });
+    } else if (message) {
 
+        if(message.trim().length >= 1){
+            const newMessageRef = push(messagesRef);
+            const data = new Date();
+            set(newMessageRef, {
+                mittente: userEmail,
+                text: message,
+                ora: data.getHours(),
+                minuti: data.getMinutes(),
+                giorno: data.getDate(),
+                mese: data.getMonth() + 1,
+                anno: data.getFullYear()
+            });
+        }else{
+            alert("Non è possibile inviare messaggi vuoti");
         }
+
+        // Pulizia del campo di testo
+        document.getElementById('messaggio').value = '';
 
     }
 
@@ -138,11 +140,14 @@ onChildAdded(messagesRef, (snapshot) => {
         messageData.minuti = "0" + messageData.minuti;
     }
 
+    // Data e ora
     const ora = messageData.ora + ":" + messageData.minuti;
     const data = messageData.giorno + "/" + messageData.mese + "/" + messageData.anno;
 
+    // Creazione del tag <p> (messaggio)
     const messageElement = document.createElement('p');
 
+    // Capire se sia inviato dal mittente o da un altro utente
     if (messageData.mittente == userEmail) {
         messageElement.classList.add("utente");
         messageElement.innerHTML = "<b style=\"color: rgb(87, 153, 122); user-select: none\">Tu</b>";
@@ -151,66 +156,74 @@ onChildAdded(messagesRef, (snapshot) => {
         messageElement.innerHTML = "<b style=\"color: rgb(129, 164, 193); user-select: none\">" + messageData.mittente + "</b>";
     }
 
+    // Verifica se il testo contiene un link
     if (isLink(messageData.text)) {
+        // Formatta il testo aggiungendo un anchor per il link
         messageElement.innerHTML += "<br>" + formatLink(messageData.text);
     } else {
         messageElement.innerHTML += "<br>" + messageData.text;
     }
 
+    // Se contiene una immagine la aggiunge al corpo del messaggio con uno stile predefinito
     if (messageData.image) {
         messageElement.innerHTML += `<br><img src="${messageData.image}" style="max-width: 300px; max-height: 300px; border-radius: 5px;" />`;
     }
 
+    // Aggiunta dell'orario
     messageElement.innerHTML += "<br><i style=\"color: gray; user-select: none\">" + ora + " - " + data + "</i>";
 
+    // Aggiunta del messaggio al codice html
     document.getElementById('messaggi').appendChild(messageElement);
+
+    // Reset della posizione della scrollbar
     chat.scrollTop = chat.scrollHeight;
 
 });
 
-// Esporta in csv o pdf
+// Metodo per esportare in csv o pdf (geeksforgeeks.org)
 document.getElementById("esporta").addEventListener("click", function() {
-
     let dati = [];
     var formato = document.getElementById("formato").value;
 
-    onChildAdded(messagesRef, (snapshot) => {
-        const messageData = snapshot.val();
-        
-        // Controllo data
-        const dataMessaggio = new Date(messageData.anno + "-" + messageData.mese + "-" + messageData.giorno);
-        const dataAdttuale = new Date();
+    // Recupero dei messaggi dal database Firebase
+    get(messagesRef).then((snapshot) => {
+        snapshot.forEach((ciclo) => {
+            const messageData = ciclo.val();
 
-        // Controllo data e ora del messaggio, se più vecchio di 30 giorni non viene visualizzato
-        if((dataAdttuale - dataMessaggio) / (1000 * 3600 * 24) >= 30){
-            return;
-        }
+            // Controllo data
+            const dataMessaggio = new Date(messageData.anno + "-" + messageData.mese + "-" + messageData.giorno);
+            const dataAdttuale = new Date();
+            if ((dataAdttuale - dataMessaggio) / (1000 * 3600 * 24) >= 30) {
+                return;
+            }
 
-        dati.push({
-            mittente: messageData.mittente,
-            testo: messageData.text,
-            data: `${messageData.giorno}/${messageData.mese}/${messageData.anno}`,
-            ora: `${messageData.ora}:${messageData.minuti}`
+            dati.push({
+                mittente: messageData.mittente,
+                testo: messageData.text,
+                data: `${messageData.giorno}/${messageData.mese}/${messageData.anno}`,
+                ora: `${messageData.ora}:${messageData.minuti}`
+            });
         });
-    });
-    
-});
 
-if (formato == "csv") {
-    // Aggiunta dell'intestazione del CSV
-    var contenuto = "Mittente, Testo, Data, Ora\n";
+        if (formato == "csv") {
+            var contenuto = "Mittente, Testo, Data, Ora\n";
 
-    dati.forEach((msg, index) => {
-        if (index > 0) {
-            csvContent += `${msg["Mittente"]}, ${msg["Testo"]}, ${msg["Data"]}, ${msg["Ora"]}\n`;
+            dati.forEach((i) => {
+                contenuto += '"' + i.mittente + '", "' + i.testo + '", "' + i.data + '", "' + i.ora + '"\n';
+            });
+
+            const blob = new Blob([dati], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'export.csv';
+            a.click();
+
+        } else if (formato == "pdf") {
+
         }
-    });
-
-} else if (formato == "pdf") {
-    
-}else{
-    alert("Seleziona un formato");
-}
+    })
+});
 
 // Funzione per gestire il logout
 // Dopo il logout, l'utente viene reindirizzato alla pagina di autenticazione
@@ -218,7 +231,7 @@ document.getElementById('logout').addEventListener('click', () => {
     signOut(auth);
 });
 
-// Metodo di verifica se sia un link
+// Metodo di verifica se sia un link (con chat gpt)
 function isLink(str) {
     // Il regex è una stringa utilizzabile come filtro da applicare ad una stringa
     const regex = /https?:\/\/[^\s/$.?#].[^\s]*/;
@@ -237,7 +250,7 @@ function isLink(str) {
     return false; // Se non c'è nessun URL
 }
 
-// Metodo per formattare il contenuto di un messaggio se contiene un link
+// Metodo per formattare il contenuto di un messaggio se contiene un link (con chat gpt)
 function formatLink(str){
     // Il regex è una stringa utilizzabile come filtro da applicare ad una stringa
     const regex = /https?:\/\/[^\s/$.?#].[^\s]*/g;
@@ -263,7 +276,7 @@ function formatLink(str){
     return formattata;
 }
 
-// Funzione per convertire un file in base 64
+// Funzione per convertire un file in base 64 (Con chat gpt)
 function convertToBase64(file, onLoad) {
     // Creazione dell'oggetto "reader" per leggere un file
     const reader = new FileReader();
