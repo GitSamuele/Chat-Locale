@@ -23,6 +23,7 @@ const database = getDatabase(app);
 let userEmail = "";
 const chat = document.getElementById("messaggi");
 const paroleProibite = ["Proibita"];
+var isFiltering = false;
 
 // Funzione per verificare lo stato di autenticazione dell'utente
 onAuthStateChanged(auth, (user) => {
@@ -37,7 +38,7 @@ onAuthStateChanged(auth, (user) => {
 });
 
 // Referenza al nodo "messaggi" nel database
-const messagesRef = ref(database, 'messaggi');
+const messagesRef = ref(database, "messaggi");
 
 // Invio del messaggio alla pressione del tasto con id "invia"
 document.getElementById("invia").addEventListener("click", () => {
@@ -123,80 +124,177 @@ function invioMessaggio() {
 
 }
 
+// Filtro applicato dall'utente
+document.getElementById("applicaFiltro").addEventListener("click", () => {
+    const parolaChiave = document.getElementById("parolaChiave").value.trim().toLowerCase();
+
+    if (parolaChiave) {
+        filtraMessaggi(parolaChiave);
+    }else{
+        alert("Nessuna parola chiave inserita");
+    }
+});
+
+// Reset del filtro
+document.getElementById("rimuoviFiltro").addEventListener("click", () => {
+    isFiltering = false;
+    // Pulizia del filtro
+    document.getElementById("parolaChiave").value = '';
+    // Pulizia della chat
+    chat.innerHTML = '';
+    // Caricamento di tutti i messaggi
+    caricaMessaggi();
+});
+
+// Funzione per visualizzare i messaggi con una parola chiave (con chat gpt)
+function filtraMessaggi(chiave){
+    // Ottenimento con un "get" dei messaggi al riferimento al db (messagesRef) in "snapshot"
+    get(messagesRef).then((snapshot) => {
+        // Pulizia della chat
+        chat.innerHTML = '';
+        // Cambiamento di stato
+        isFiltering = true;
+
+        // Ciclo dei messaggi
+        snapshot.forEach((messaggio) => {
+            // Ottenimento degli attributi del messaggio
+            const messageData = messaggio.val();
+
+            // Verifica se il messaggio contiene la parola chiave, altrimenti viene ignorato
+            if (messageData.text && messageData.text.toLowerCase().includes(chiave)) {
+                visualizzaMessaggio(messageData);
+            }
+        });
+    });
+}
+
+// Carica tutti i messaggi
+function caricaMessaggi(){
+    get(messagesRef).then((snapshot) => {
+        snapshot.forEach((messaggio) => {
+            visualizzaMessaggio(messaggio.val());
+        });
+    });
+}
+
+// Aggiornamento dei messaggi se non si sta filtrando
 onChildAdded(messagesRef, (snapshot) => {
-    const messageData = snapshot.val();
+    if(!isFiltering){
+        visualizzaMessaggio(snapshot.val())
+    }
+});
 
-    // Controllo data
-    const dataMessaggio = new Date(messageData.anno + "-" + messageData.mese + "-" + messageData.giorno);
-    const dataAdttuale = new Date();
+function visualizzaMessaggio(dati){
+    const dataMessaggio = new Date(dati.anno, dati.mese - 1, dati.giorno);
+    const dataAttuale = new Date();
+    // Calcolo dei caratteri nel testo (regex con chat gpt)
+    const volume = dati.text.replace(/\s+/g, '').length;
 
-    // Controllo data e ora del messaggio, se più vecchio di 30 giorni non viene visualizzato
-    if((dataAdttuale - dataMessaggio) / (1000 * 3600 * 24) >= 30){
+    // Controllo: visualizza solo i messaggi recenti (meno o uguali a 30 giorni)
+    if ((dataAttuale - dataMessaggio) / (1000 * 3600 * 24) > 30) {
         return;
     }
 
     // Formattazione dei minuti
-    if (messageData.minuti >= 0 && messageData.minuti <= 9) {
-        messageData.minuti = "0" + messageData.minuti;
+    if (dati.minuti >= 0 && dati.minuti <= 9) {
+        dati.minuti = "0" + dati.minuti;
     }
 
     // Data e ora
-    const ora = messageData.ora + ":" + messageData.minuti;
-    const data = messageData.giorno + "/" + messageData.mese + "/" + messageData.anno;
+    const ora = dati.ora + ":" + dati.minuti;
+    const data = dati.giorno + "/" + dati.mese + "/" + dati.anno;
 
-    // Creazione del tag <p> (messaggio)
+    // Creazione del tag contenente il messaggio
     const messageElement = document.createElement('p');
 
-    // Capire se sia inviato dal mittente o da un altro utente
-    if (messageData.mittente == userEmail) {
+    // Applicazione dello stile al messaggio
+    if (dati.mittente == userEmail) {
         messageElement.classList.add("utente");
-        messageElement.innerHTML = "<b style=\"color: rgb(87, 153, 122); user-select: none\">Tu</b>";
+        messageElement.innerHTML = "<b style='color: rgb(87, 153, 122); user-select: none'>Tu</b>";
     } else {
         messageElement.classList.add("altri");
-        messageElement.innerHTML = "<b style=\"color: rgb(129, 164, 193); user-select: none\">" + messageData.mittente + "</b>";
+        messageElement.innerHTML = "<b style='color: rgb(129, 164, 193); user-select: none'>" + dati.mittente + "</b>";
     }
 
     // Verifica se il testo contiene un link
-    if (isLink(messageData.text)) {
+    if (isLink(dati.text)) {
         // Formatta il testo aggiungendo un anchor per il link
-        messageElement.innerHTML += "<br>" + formatLink(messageData.text);
+        messageElement.innerHTML += "<br>" + formatLink(dati.text);
     } else {
-        messageElement.innerHTML += "<br>" + messageData.text;
+        messageElement.innerHTML += "<br>" + dati.text;
     }
 
-    // Se contiene una immagine la aggiunge al corpo del messaggio con uno stile predefinito
-    if (messageData.image) {
-        messageElement.innerHTML += `<br><img src="${messageData.image}" style="max-width: 300px; max-height: 300px; border-radius: 5px;" />`;
+    // Se contiene un'immagine
+    if (dati.image) {
+        messageElement.innerHTML += "<br><img src='" + dati.image + "' style='max-width: 300px; max-height: 300px; border-radius: 5px;' />";
     }
 
-    // Aggiunta dell'orario
-    messageElement.innerHTML += "<br><i style=\"color: gray; user-select: none\">" + ora + " - " + data + "</i>";
+    // Aggiunta della data e ora
+    messageElement.innerHTML += "<br><i style='color: gray; user-select: none'>" + ora + " - " + data + "</i>";
 
-    // Aggiunta del messaggio al codice html
-    document.getElementById('messaggi').appendChild(messageElement);
+    // Aggiunta del volume dei messaggi
+    if(volume > 1){
+        messageElement.innerHTML += "<br><i style='color: gray; user-select: none'>" + volume + " caratteri</i>";
+    }else if(volume == 1){
+        messageElement.innerHTML += "<br><i style='color: gray; user-select: none'>" + volume + " carattere</i>";
+    }else{
+        messageElement.innerHTML += "<br><i style='color: gray; user-select: none'>Nessun carattere</i>";
+    }
+    
+    // Aggiunta del messaggio nella chat
+    chat.appendChild(messageElement);
 
-    // Reset della posizione della scrollbar
+    // Scroll della chat all'aggiunta di un messaggio
     chat.scrollTop = chat.scrollHeight;
+    
+}
 
-});
+// Statistica messaggi/giorno
+function messaggiAlGiorno(){
+
+    const attuale = new Date();
+    var contaMessaggi = 0;
+
+    get(messagesRef).then((snapshot) => {
+        snapshot.forEach((messaggio) => {
+            const dati = messaggio.val();
+            const dataMessaggio = new Date(dati.anno, dati.mese - 1, dati.giorno);
+
+            // Verifica se il messaggio sia più vecchio di 30 giorni
+            if ((attuale - dataMessaggio) / (1000 * 3600 * 24) <= 30) {
+                contaMessaggi++;
+            }
+        });
+        document.getElementById("mediaMessaggi").innerHTML = "Media dei messaggi negli ultimi 30 giorni: <i>" + (contaMessaggi/30).toFixed(2) + " Messaggi/Giorno</i>";
+    })
+
+}
 
 // Metodo per esportare in csv o pdf (geeksforgeeks.org)
 document.getElementById("esporta").addEventListener("click", function() {
     let dati = [];
     var formato = document.getElementById("formato").value;
 
-    // Recupero dei messaggi dal database Firebase
+    // Recupero dei messaggi dal database Firebase al riferimento "messagesRef"
     get(messagesRef).then((snapshot) => {
-        snapshot.forEach((ciclo) => {
-            const messageData = ciclo.val();
+        snapshot.forEach((messaggio) => {
+            const messageData = messaggio.val();
 
-            // Controllo data
+            // Controllo data, vengono esportati solo quelli visibili in chat
             const dataMessaggio = new Date(messageData.anno + "-" + messageData.mese + "-" + messageData.giorno);
             const dataAdttuale = new Date();
             if ((dataAdttuale - dataMessaggio) / (1000 * 3600 * 24) >= 30) {
                 return;
             }
-
+            // Formattazione dei minuti
+            if (messageData.minuti >= 0 && messageData.minuti <= 9) {
+                messageData.minuti = "0" + messageData.minuti;
+            }
+            // Il contenuto non può essere vuoto (può accadere con l'invio di immagini dove non serve immettere del testo)
+            if(messageData.text == 0){
+                return;
+            }
+            // Quelli validi vengono salvati all'interno dell'array
             dati.push({
                 mittente: messageData.mittente,
                 testo: messageData.text,
@@ -206,21 +304,50 @@ document.getElementById("esporta").addEventListener("click", function() {
         });
 
         if (formato == "csv") {
+            // Intestazione
             var contenuto = "Mittente, Testo, Data, Ora\n";
 
+            // Aggiunta dei messaggi nell'array "dati"
             dati.forEach((i) => {
                 contenuto += '"' + i.mittente + '", "' + i.testo + '", "' + i.data + '", "' + i.ora + '"\n';
             });
 
-            const blob = new Blob([dati], { type: 'text/csv' });
+            // Esportazione in csv (con chat gpt)
+            // Creazione di un blob specificandone il tipo "testo/csv"
+            const blob = new Blob([contenuto], { type: 'text/csv' });
+            // Creazione dell'url per il download del blob (posizione del blob contenente il csv)
             const url = URL.createObjectURL(blob);
+            // Generazione di un elemento "<a>" per il download dell'elemento
             const a = document.createElement('a');
+            // Impostazione dell'attributo "href" dell'elemento anchor nel url del blob
             a.href = url;
-            a.download = 'export.csv';
+            // Definizione del nome del file
+            a.download = 'chat.csv';
+            // .click() è un metodo per scaricare automaticamente un file, simula la pressione di un utente
             a.click();
 
         } else if (formato == "pdf") {
+            // Creazione dell'oggetto jsPDF (da https://www.geeksforgeeks.org/ + chatgpt)
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
 
+            // Aggiunta di un titolo alle coordinate 10 10
+            doc.text("Chat esportata", 10, 10);
+
+            doc.autoTable({
+                // Intestazione della tabella
+                head: [['Mittente', 'Testo', 'Data', 'Ora']],
+                // Scrittura delle righe
+                body: dati.map(messaggio => [messaggio.mittente, messaggio.testo, messaggio.data, messaggio.ora]),
+                // Definisce l'altezza iniziale della tabella
+                startY: 20,
+                margin: { top: 30 },
+                // Stile della tabella
+                theme: 'striped'
+            });
+
+            // Salvare il file come "chat.pdf"
+            doc.save("chat.pdf");
         }
     })
 });
@@ -237,7 +364,7 @@ function isLink(str) {
     const regex = /https?:\/\/[^\s/$.?#].[^\s]*/;
     const match = str.match(regex); // Cerca il primo match dell'URL
 
-    // Se c'è un match, verifica se è un URL valido
+    // Se c'è un match tra la stringa e il regex, verifica se è un URL valido
     if (match) {
         try {
             new URL(match[0]); // Tenta di creare un oggetto URL
@@ -291,4 +418,5 @@ function convertToBase64(file, onLoad) {
 // Aggiornamento della visuale al caricamento della chat
 window.onload = () => {
     chat.scrollTop = chat.scrollHeight;
+    messaggiAlGiorno();
 };

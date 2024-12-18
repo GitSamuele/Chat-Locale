@@ -91,7 +91,7 @@ button:hover{
     background-color: #246426;
 }
 
-#invia, #immagineAspetto{
+#invia, #immagineAspetto, #applicaFiltro, #rimuoviFiltro{
     width: 40px;
     height: 40px;
 }
@@ -121,16 +121,16 @@ button:hover{
     border: 1px solid black;
 }
 
-#filter-chat{
+#parolaChiave{
     width: 30vw;
 }
 
-#filter-box{
+#filtro{
     margin-top: 35px;
     margin-left: 30vw;
 }
 
-/* Scrollbar */
+/* Scrollbar (w3schools) */
 
 ::-webkit-scrollbar {
     width: 20px;

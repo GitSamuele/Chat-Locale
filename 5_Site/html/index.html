@@ -9,10 +9,12 @@
 <body>
 
     <h3 id="benvenuto"></h3>
+    <p id="mediaMessaggi"></p>
 
-    <div id="filter-box">
-        <input type="text" id="parola-chiave" placeholder="Inserire parola chiave...">
-        <button id="applica-filtro">↵</button>
+    <div id="filtro">
+        <input type="text" id="parolaChiave" placeholder="Inserire parola chiave...">
+        <button id="applicaFiltro">↵</button>
+        <button id="rimuoviFiltro">✖</button>
     </div>
 
     <div id="contenitore">
@@ -37,6 +39,10 @@
     </div>
 
     <script type="module" src="../js/index.js"></script>
+    <!-- Importazione di jsPDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Importazione modulo per creazione delle tabelle -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.21/jspdf.plugin.autotable.min.js"></script>
 
 </body>
 </html>

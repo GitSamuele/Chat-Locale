@@ -73,7 +73,7 @@ document.getElementById('register-button').addEventListener('click', () => {
                 })
 
         }).catch( () => {
-            alert("E-mail utente già in uso");
+            alert("E-mail utente già in uso o password troppo corta");
         })
 });
 
